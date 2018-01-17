@@ -1,0 +1,108 @@
+------------------------------------------------------------------------------------------------------------------------------|
+# Enumerar, crear, eliminar particiones en discos MBR y GPT #
+
+@listar discos, fdisk -l el simbolo '*' indica donde se encuentra instalado el SO
+en caso de mac usando vmware fusion el disco creado puede ser /dev/sdb
+
+parted /dev/sdb
+Partition table: msdos, MBR [3 Partition Primarias]
+crear particiones en caso de MRB, 3 primarias, luego extendida y sobre la extendida las logicas
+parted /dev/sdb unit MB print free, tabla de particiones grafica.
+
+@partprobe -s, actualiza cambios en particiones
+
+- nota - despues de cambiar las paticiones, ejecutar comando 'partprobe -s'
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Crear y eliminar volúmenes físicos, asignar volúmenes físicos a grupos de volúmenes, crear y borrar volúmenes lógicos #
+
+@tipo de particiones
+t, LVM = 8e
+
+@volumenes fisicos
+pvs, muestra los volumenes creado
+
+@crear volumenes fisicos
+pvcreate  /dev/sdb1  /dev/sdb2  /dev/sdb3  /dev/sdb5
+pvs, listar
+
+@volumenes de grupo
+vgcreate vg_name  /dev/sdb1  /dev/sdb2
+vgextend vg_name /dev/sdb5
+vgs, listar los volumenes
+
+@Volumenes logicos
+lvs, show logical volumes
+lvcreate vg_name -n lv01 -L 100M, 10G
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Configurar sistemas para que monten sistemas de archivos al arrancar mediante un ID único universal (UUID) o una etiqueta. #
+
+ - nota - /etc/fstab, mkdir directorios para montaje
+
+ @formatear particiones
+ mkfs.ext3 /dev/vg_name/lv01
+ mkfs.ext4 /dev/vg_name/lv02
+ @LABEL
+ mkfs.ext4 -L Label-ext4 /dev/vg_name/lv03, crear particion + LABEL
+tune2fs -L label-name /dev/vg_name/lv03, modifica LABEL particion ya formateada
+
+ @listar particiones
+ blkid |grep vg_name
+
+ @puntos de montaje
+ mkdir /mnt/{lv01,lv02,lv03,lv04}
+
+ @montar particion con UUID
+ nano /etc/fstab
+ UUID="uiid-number"  /mnt/lv01 ext3 defaults 0 0
+ LABEL=label_name /mnt/lv03 ext4 defaults 0 0
+ /dev/mapper/vg_name/lv04 /mnt/lv04 ext4 defaults 0 0
+
+ @check montaje, # "NO REINICIAR"
+ mount -a, si el comando no devuelve error continuar
+ df -hT, visualiza particiones montadas
+ reboot, para comprobar
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Agregar nuevas particiones, volúmenes lógicos y cambiar a un sistema de forma no destructiva #
+
+@extender memoria Swap
+comrpobar swap, swapon, se obtiene listado de memoria swap
+crear particion
+cambiar etiqueta, SWAP = '82'
+partprobe -s
+
+@formatear swap
+mkswap /dev/db6, muestra automaticamente el 'UUID'
+lvcreate vg_name -n swap01 -L 200M
+montar en fstab
+UUID="swap-numberuiid" swap swap defaults 0 0
+swapon, comprobar memoria antes del cambio
+swapon -a, carga nuevamente la memoria swap
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Crear, montar, desmontar y utilizar los sistemas de archivos vfat, ext4 y xfs # 
+
+@crear particiones
+@etiquetar particiones
+@formatear particiones
+mkfs.ext4, mkfs.vfat, mkfs.xfs
+example:
+mkfs.ext /dev/sdb1
+mkfs.xfs /dev/sdb2
+mkfs.vfat /dev/sdb3
+
+@crear puntos de montaje
+mkdir /mnt/{extX,vfat,xfs}
+
+@blkid, listar los UUID y listar particiones
+@agregar a fstab
+
+@formato
+UUID="uiid-number" /mnt/vfat vfat defaults 0 0
+UUID="uuid-number" /mnt/xfs xfs defaults 0 0
+
+------------------------------------------------------------------------------------------------------------------------------|
+
+# 

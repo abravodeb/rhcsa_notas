@@ -1,0 +1,102 @@
+------------------------------------------------------------------------------------------------------------------------------|
+# Instalar y actualizar paquetes de software de Red Hat Network, un repositorio remoto o desde el sistema archivos local #
+
+@instalar y actualizar paquetes
+
+yum install paquete
+yum group list, lista los grupos el cual instalada todas las dependencias
+yum group install "Virtualization Host", instala KVM y todos los paquetes necesarios
+
+yum history, lista los comandos yum ejecutados
+yum history info '2', muestra el contenido instalado
+yum history undo '2', desintala los paquetes y todas sus dependencias 'rollback'
+
+@rpm querys
+rpm -qf  /etc/samba/smb.conf, lisa el paquete correspondiente a un archivo de configuracion
+rpm -qlc 'nombre_paquete', conoce los archivos de conf del paquete
+rpm -qf /etc/hosts
+rpm -qa |grep -i 'nombre_paquete'
+
+
+@repositorio local creado a través del DVD de instalacion
+
+El comando mount mostrara los dispositivos montados, normalmente el DVD es /dev/sr0
+crear directorio donde montar el DVD
+mkdir /mnt/iso
+
+@estructura basica de un archivo.repo
+------------------------------------------------------------|
+[repositorio]
+name = Redjat linux 7.3
+#baseurl=ftp://servidoripa.example.com/pub/repos/rhel7/
+#baseurl=file:///mnt/iso
+enabled = 1
+gpgcheck = 0
+------------------------------------------------------------|
+yum clean all para limpiar la lista
+yum repolist, volvera a leer los repositorios habilitados
+
+@instalar un repo a través de red, ftp, http.
+ubicar la ruta ftp-http://server/ruta.
+yum-config-manager --add-repo ftp-http://server/ruta, de esta forma automaticamente descarga y coloca el repo en su directorio
+si el repositorio se encuentra 'enabled=0' cambiar a 'enabled=1' o yum-config-manager --enabled reponame
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Crear, borrar y modificar cuentas de usuario locales #
+@crear
+useradd -c 'Comentario' -u 1234 -s /sbin/nologin 'user_name'
+tail /etc/passwd, muestra los usuarios del sistema
+@modificar
+usermod -s /bin/bash 'user_name'
+usermod -c "comentario del usuario" 'user_name'
+userdel -r 'user_name', elimina el usuario y su directorio home
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Cambiar contraseñas y ajustar la duración de las contraseñas para las cuentas de usuarios locales #
+
+@chage
+chage --help, ayuda.
+chage -l 'user_name'
+caducar la contraseña en 60 dias, date -d "60 days" "+%Y-%m-%d"
+chage -E '2018-10-28'
+chage -M 35 'user_name', la contraseña expira en 35 días.
+chage -I 5 'user_name'
+chage -m 3 'user_name'
+chage -W 5 'user_name'
+chage -d 0 'user_name', se fuerza al usuario a cambiar la contraseña en el proximo login
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Crear, borrar y modificar grupos locales y la pertenencia a grupos #
+
+@herramienta para administrar grupo y usuarios, 'system-config-users'
+
+@crear grupo
+groupadd 'group_name'
+tail /etc/group
+
+@modificar grupos
+groupmod -n groupo02 nombre2
+
+@eliminar grupo
+groupdel
+
+@crear 3 usuario
+for i in alfredo antonio aldo; do useradd $i; done
+
+@crear usuario con grupo secundario
+adduser Jack -G contabilidad
+
+@cambiar de grupo a un usuario
+usermod -aG contabilidad 'user_name'
+
+@ver quienes pertenecen a un grupo
+groupmems -g contabilidad -l
+getent group contabilidad
+
+@sacar un usuario de un grupo - eliminar de un grupo
+gpasswd -d jack contabilidad
+
+@agregar varios usuarios a un grupo 1 comando
+for i in carlos victor felipe; do usermod -aG 'group_name' $i; done
+
+------------------------------------------------------------------------------------------------------------------------------|

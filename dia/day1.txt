@@ -1,0 +1,104 @@
+------------------------------------------------------------------------------------------------------------------------------|
+# Inicial sistemas manualmente  en destinos diferentes#
+
+done! 10/02/17,
+
+- reboot
+- interrumpir el inicio
+- ubicar linea 'linux16' después de swap completar con 'systemd.unit=multi-user.target'
+- ctrl x
+- el cambio se realizará solamente una vez, reiniciando el equipo cargara el target por defecto.
+
+# Interrumpir el proceso de arranque con el fin de obtener acceso a un sistema # 
+@cambiar contraseña root
+- reboot
+- precionar 'e'
+- ubicar linea 'linux16' eliminar 'rhgb quit'
+- agregar 'rd.break'
+- al cargar el sistema volver a montar /sysroot con opciones 'rw'
+- mount -o rw,remount /sysroot
+- chroot /sysroot
+- passwd 'ingresar nueva contraseña'
+- touch /.autorelabel
+- exit
+- exit
+------------------------------------------------------------------------------------------------------------------------------|
+# Configurar las funciones de red y la resolución de nombre de host de forma estática o dinámica #
+@Nombre del equipo y cambiar nombre
+- obtener nombre del host 'hostnamectl'
+- cambiar nombre 'hostnamectl set-hostname new_name'
+- systemctl restart systemd-hostnamed
+
+- cambiar configuracion IP a través de la interfaz gráfica 'static, DHCP' asegurar  'autoconnect'  al inicio
+- conocer la tabla de ruteo 'route -n'
+- 'cat /etc/revols.conf' revisar el servidor DNS
+- Otra forma de trabajar con la interfaz de RED: /etc/sysconfig/network-scripts/ifcfg-name (directamente desde el archivo) o
+  nmtui, nmcli, etc.
+'nmcli' #comandos
+- nmcli con sh, muestra las interfaces conectadas
+- modificar a través de 'nmcli'
+@Ip estatica
+- nmcli con modify eth0 ipv4.adresses 192.168.0.1/24 ipv4.geteway 192.168.0.254 ipv4.dns 8.8.8.8 connection.autoconnect yes
+ipv4.method manual
+@DHCP
+- nmcli con modify eth0  connection.autoconnect yes ipv4.method auto (Asignacion de DHCP)
+@Iniciar y bajar interfaz de red
+- bajar red 'nmcli con eth0 down' | 'nmcli con eth0 up'
+@Eliminar una red y crear
+- eliminar y crear una nueva conexión con 'nmcli'
+- nmlci connection delete 'etho' <---- nombre de la interfaz
+- Para agregar una por interfaz grafica solamente debemos agregar en profile
+@agregar profile via terminal
+-nmcli connection add type ethernet ifname 'nombre conexion-eth0-ens33' ipv4.method manual ipv4.address 192.168.1.200.1/24
+ipv4.geteway 192.1.200.41 connection.autoconnect yes
+------------------------------------------------------------------------------------------------------------------------------|
+# Configurar sistemas para que se inicien automáticamente en un destino específico #
+
+- systemctl set-default + tab, para mostrar los target.
+- systemctl set-default multi-user.target, se crear un enlace simbolico y cambia el target por defecto.
+- systemctl set-default graphical.target, se crea un enlace simbolico y cambiar el target por defecto.
+- systemctl isolate graphical.target, cambiar target sin cambiar el target por defecto.
+
+------------------------------------------------------------------------------------------------------------------------------|
+
+# Instalar Red hat Linux Enterprise de forma automatica con Kickstart (Objetivo depreciado)
+@utilizando una ISO.
+ - instalar una maquina normalmente, al momento de instalar red hat "Red hat enterprise linux 7.3"
+ - precionar 'tab' y especificar la ruta, 'ks=ftp://192.1.200.1/pub/kick1.cfg'
+@utilizando repositorio.
+- precionar 'tab' y especificar repo, 'ftp://192.1.200.1/pub/repos/rhel7'
+y especificar la ruta del 'Kickstart', kernel options: 'ks=ftp://192.1.200.1/pub/kick1.cfg'
+
+------------------------------------------------------------------------------------------------------------------------------|
+
+# Configurar sistemas para que ejecuten máquinas virtuales al arrancar # 
+
+@metodo grafico
+- Las maquinas virtuales son en KVM, se puede configurar a través de la interfaz de kvm en opciones 'Boot options'
+marcando la casilla 'Autostart'.
+@metodo por terminal
+- virsh list --all, muestra todas las maquinas virtuales creadas en el servidor.
+- virsh autostart 'nombre_maquina' configura la maquina para iniciar automaticamente.
+- virsh autostart 'nombre_maquina' --disable, desactiva el inicio automatico.
+- virsh destroy 'nombre_maquina', apaga la maquina
+------------------------------------------------------------------------------------------------------------------------------|
+
+# Modificar el cargador de arranque del sistema #
+
+ - grep ^menuentry /boot/grub2/grub.cfg, muestra los kernel disponible, sirve para contar y especificar otro, el primer kernel parte
+ de 0.
+ @editar el archivo de configuracion kernel
+ - se debe modificar /etc/default/grub
+#############################################################################################|
+ GRUB_TIMEOUT=5
+ GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+ GRUB_DEFAULT=saved
+ GRUB_DISABLE_SUBMENU=true
+ GRUB_TERMINAL_OUTPUT="console"
+ GRUB_CMDLINE_LINUX="crashkernel=auto rd.lvm.lv=rhel00/root rd.lvm.lv=rhel00/swap rhgb quiet"
+ GRUB_DISABLE_RECOVERY="true"
+#############################################################################################|
+
+- al modificar el archivo se deben aplicar los cambios con, 'grub2-mkconfig -o /boot/grub2/grub.cfg'
+
+------------------------------------------------------------------------------------------------------------------------------|

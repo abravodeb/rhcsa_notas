@@ -1,0 +1,85 @@
+------------------------------------------------------------------------------------------------------------------------------|
+# Crear y eliminar volúmenes físicos, asignar volúmenes físicos a grupos de volúmenes, crear y borrar volúmenes lógicos #
+
+@volumenes fisicos
+@volumenes de grupo
+
+- nota - volumen de grupo crea phisycal extend = 4M 'default'
+100 M = 25 px '4M'
+50 px = 200 M
+
+#ejemplo
+Phisical extend = volumen de grupo
+Logical extend =  volumen logico
+
+crear un volumen logico de 50 logical extend  del grupo "X" en donde el volumen de grupo tiene un tamaño de 16 phisycal extend
+
+50*160 = 800 M
+
+@especficar phisycal extend
+vgcreate vg_name -s 16M /dev/sdb1 /dev/sdb2
+vgdisplay para comprobar PE size = 16.00 MiB, Total PE = 30
+
+@crear a través de logical extend
+lvcreate vg_name -n lv01 -l 30
+
+ - nota - se usará ext4 para reducir y expandir particiones, nfs solo permite extender.
+
+ # Reducir tamaños,
+
+
+------------------------------------------------------------------------------------------------------------------------------|
+ # Montar y desmontar sistemas de archivos de red CIFS y NFS #
+
+ @samba
+ probar conectividad con servidor, ping server.example.com
+ yum install cifs-utils samba-client
+
+ @probar coneccion
+ smbclient -L servidor.example.com, consulta al servidor
+ @usuario anonimo
+ smbclient //servidoripa.example.com/public -U guest
+@usuario registrado
+ smbclient //servidoripa.example.com/data -U sambauer1
+
+ @conexion temporal directorio samba
+ mount -t cifs -o username=sambauser1 //servidoripa.example.com/data /temporal "pide password"
+ mount -t cift -o username=sambauser1,password=password //servidoripa.example.com/data /temporal "se especfica password"
+
+ @conexion persistente
+ en 'fstab'
+ mkdir /mnt/samba_data
+ crear archivo con las credenciales, touch /root/cred
+ agregar las lineas
+ -
+ username=sambauser1
+ password=password
+ -
+ cambiar permisos, chmod 400 /root/cred
+
+ //servidoripa.example.com/data /mnt/samba_data cifs _netdev,credentials=/root/cred 0 0
+ en 'fstab'
+
+ - nota - NFS, network file system
+
+ @paquetes necesarias
+ yum install nfs-utils
+
+ @revisar lo que exporta un servidor
+ showmount -e servidoripa.example.com
+
+ @montar recurso nfs temporal
+ mkdir /mnt/nfs-folder
+ mount -t nfs -o vers=3 servidoripa.example.com:/{'recurso-delserver'} /mnt/nfs-folder
+ mount -t nfs servidoripa.example.com:/{'recurso-delserver'} /mnt/nfs-folder
+
+ @montar permanente nfs-folder
+ 'fstab'
+ servidoripa.example.com:/srv/'recurso-nfs' /mnt/nfs-folder nfs _netdev 0 0
+ mount -a
+ 'NO REINICIAR HASTA Q NO OCURRA UN PROBLEMA'
+ @comprobar
+ df -hT
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Ampliar los volúmenes lógicos existentes #

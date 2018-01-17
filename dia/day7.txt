@@ -1,0 +1,6 @@
+------------------------------------------------------------------------------------------------------------------------------|
+
+# Programar tareas mediante at y cron
+
+- nota -
+desventajas de 'at' programa tareas que se ejecuten una vez.

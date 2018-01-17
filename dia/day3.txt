@@ -1,0 +1,24 @@
+------------------------------------------------------------------------------------------------------------------------------|
+# Actualizar el paquete del kernel adecuadamente para garantizar un sistema que se pueda arrancar #
+
+@actualizar kernel
+repositorios configurado
+yum install kernel, uactualiza e instala nuevo kernel
+
+@setear kernel
+cat /boot/grub2/grub.confg |grep -i menuentry, listado de los kernel, el primero comienza en '0'
+grub2-set-default 'kernel_number 0,1,2'
+
+@numero de kernel almacenados en el sistema
+cat /etc/yum.conf, installonly=3, solo instalará 3 kernel, después comenzará a eliminar
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Configurar un sistema para que utilice un servicio de autenticación existente para la información de usuarios y grupos #
+
+@configuracion de Ldap, estos valores deben proporcionarlos en redhat
+yum install authconfig-gtk sssd
+comprobar el certificado
+curl ftp://server/pub/ca.crt
+
+@otras herramientas
+authconfig-tui, authconfig
