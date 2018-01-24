@@ -1,0 +1,106 @@
+------------------------------------------------------------------------------------------------------------------------------|
+# Programar tareas mediante at y cron #
+
+- nota -
+desventajas de 'at' programa tareas que se ejecuten una vez.
+
+@archivos basicos
+/etc/at.deny, usuarios quienes no pueden ejecutar tareas at
+/etc/at.allow, se debe crear
+
+at 00:56, midnight, teatime, etc.
+> mkdir /root/folder
+> echo >> "hola-file" /root/folder/at-file
+ctrl + d
+
+@ver tareas programadas
+atq
+@contenido de la tarea
+at -c "numero"
+@eliminar tarea
+atrm "numero"
+
+# Cron
+
+@directorios de cron, para ejecutar scripts controladas por "anacrontab"
+/etc/cron.hourly
+/etc/cron.daily
+/etc/cron.weekely
+
+@estructura de cron
+cat /etc/crontab
+
+# Example of job definition:
+# .---------------- minute (0 - 59)
+# |  .------------- hour (0 - 23)
+# |  |  .---------- day of month (1 - 31)
+# |  |  |  .------- month (1 - 12) OR jan,feb,mar,apr ...
+# |  |  |  |  .---- day of week (0 - 6) (Sunday=0 or 7) OR sun,mon,tue,wed,thu,fri,sat
+# |  |  |  |  |
+# *  *  *  *  * user-name  command to be executed
+
+@ver tareas de un usuario
+crontab -l -u alex|nano
+@crear tarea
+crontab -e -u alex
+
+09 1 * * *  /usr/bin/echo "hola" >> /data/rrhh/new-cron-file
+
+systemctl restart crond
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Iniciar y detener, además de configurar, los servicios que se inicien automáticamente al arrancar #
+
+yum -y install httpd
+systemctl status httpd
+systemctl is-active httpd
+systemctl is-enable httpd
+systemctl enable httpd
+systemctl start|stop httpd
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Instalar sistemas de Red Hat Enterprise Linux como quest Virtuales #
+- nota -
+Instalacion normal en kvm a través de administrador de maquinas virtuales, a través de una ISO, o kickstart
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Configurar un sistema para utilizar servicio de tiempo #
+
+- nota -
+* Importante * Datos de conexion de red configurados correctamente
+NTP, en redhat 7 se trabaja con chrony, sustituto de ntp
+el servidor debe ser especificado, es necesario conectar
+
+@informacion de la configuracion
+timedatectl
+
+@revisar paquetes necesarios
+rpm -qa |grep -i chrony
+if not install
+yum install -y chrony
+
+@confiuracion
+head /etc/chrony.conf
+
+# Use public servers from the pool.ntp.org project.
+# Please consider joining the pool (http://www.pool.ntp.org/join.html).
+#server 0.rhel.pool.ntp.org iburst
+#server 1.rhel.pool.ntp.org iburst
+#server 2.rhel.pool.ntp.org iburst
+#server 3.rhel.pool.ntp.org iburst
+
+@agregar servidor
+server servidoripa.example.com iburst
+
+@verificar servicio
+systemctl status chronyd
+systemctl is-enable chronyd
+if not active
+systemctl enable chronyd
+
+@comprobar sincronizacion
+chronyc tracking
+chronyc sources -v
+timedatectl
+NTP enabled: no
+timedatectl set-ntp true

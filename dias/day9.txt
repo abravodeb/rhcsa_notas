@@ -1,0 +1,9 @@
+------------------------------------------------------------------------------------------------------------------------------|
+# Identificar los procesos que hacen un uso intensivo de la CPU y de la memoria, ajustar la prioridad
+de los procesos con renice y eliminar procesos #
+
+@comandos
+top, htop
+
+@parar un proceso
+kill -9 

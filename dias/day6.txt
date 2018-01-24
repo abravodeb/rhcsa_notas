@@ -1,0 +1,49 @@
+------------------------------------------------------------------------------------------------------------------------------|
+
+# Crear y configurar directorios con GID definido para la colaboración #
+
+@crear 2 usuarios "alex, nano"
+@crear 2 grupos ["rrhh, soporte"]
+@asignar usuario a grupos
+@crear directorio definido para colaboracion
+
+mkdir -p /data/rrhh
+mkdir -p /data/soporte
+
+chgrp soporte /data/soporte
+chgrp rrhh /data/rrhh
+
+@cambiar permisos al directorio
+chmod 770 /data/rrhh; chmod 770 /data/soporte
+chmod ug+rwx, o--- /data/soporte;rrhh
+
+@permiso especial de grupo, directorios y archivos perteneceran al grupo del directorio padre
+chmod g+s /data/rrhh;soporte
+
+@permiso especial Sticky, el propietario puede eliminar los archivos, los demas pueden leer/editar
+chmod +t /data/rrhh;soporte
+
+------------------------------------------------------------------------------------------------------------------------------|
+- Crear y administrar listas de control de acceso (ACL)
+
+@dar permiso especificos a un usuario o grupo.
+@revisar permisos estandar, chmod, chgrp, chown, g+s
+
+getfacl /data/rrhh
+setfacl -Rm g:rrhh:rwX /data/soporte
+@al agregar una ACL a directorio, ejecutar una por defecto
+setfacl -m -d:g:rrhh:rwx /data/rrhh
+
+@permiso de lectura a un usuario especifico
+setfacl -Rm u:nano:rX /data/soporte
+setfacl -m d:u:nano:rX /data/soporte
+
+- nota -
+ejemplo
+
+cp /etc/fstab /var/tmp/
+@dar permiso a un usuario para leer y escribir "rw"
+setfacl -m u:alex:rw /var/tmp/fstab
+setfacl -m u:nano:--- /var/tmp/fstab
+su - alex
+echo "hola" >> /var/tmp/fstab

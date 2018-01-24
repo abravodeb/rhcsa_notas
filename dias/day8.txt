@@ -1,0 +1,115 @@
+------------------------------------------------------------------------------------------------------------------------------|
+# Acceder a una instancia shell y escribir comandos con sintaxis correcta #
+
+- nota -
+Objetivo basico ya realizado, uso de --help, man, etc.
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Utilizar redirección de entrada-salida (>, >>, |, 2>, etc.) #
+
+0 stdin
+1 stdout
+2 stderr
+
+>, >> crear/sobre escrirbe, agrega contenido
+
+@manda la salida estandar al archivo
+find / -type f -user abravo > contenido.txt
+
+- nota -
+los errores se visualizan en pantalla
+
+@enviar los errores a otro archivo
+find / -type f -user abravo > contenido.txt 2> error.txt
+
+@salida estandar y error estandar a un archivo
+find / -type f -user abravo &> contenido.txt
+
+@no almacenar los errores o ignorarlos
+find / -type f -user > archivo.txt 2> /dev/null
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Utilizar expresiones regulares y grep para analizar texto #
+
+grep -v ^# /etc/ssh/sshd_config, muestra todo el contenido no comentado
+egrep -v '^#|^$'  /etc/ssh/sshd_config, no comentado, sin saltos de lineas
+grep ^comienza /etc/passwd
+grep 'termina$' /etc/passwd
+grep -w 'palabra' /etc/passwd, busca palabra especifica
+grep [Dd]omain /usr/share/dict/words
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Acceder a sistemas remotos mediante ssh #
+
+ ssh root@servidor
+ ssh servidor -l root
+ ssh -p 2234 root@servidor, cambia puerto por defecto
+
+ ------------------------------------------------------------------------------------------------------------------------------|
+ # Iniciar sesión y cambiar de usuario en destinos multiusuario #
+
+ su - alex, direcciona a home del usuario
+ cd /root
+ su alex, inicia sesion en el directorio /root
+
+ ------------------------------------------------------------------------------------------------------------------------------|
+# Archivar, comprimir, desempaquetar y descomprimir archivos utilizando tar, star, gzip y bzip2 #
+
+@crear archivo tar
+tar cvf /root/folder-etc.tar /etc/
+tar tfv /root/folder-etc.tar
+
+@agregar archivos a un .tar
+tar rvf /root/folder-etc.tar add-file.txt
+
+@descomprimir
+tar xvf /root/folder-etc.tar -C /, al comprimir elimina "/"etc
+
+@comprimir en bzip2 o gzip
+tar cfz /root/folder-etc.tar.gz /etc/
+tart cfj /root/folder-etc.tar.bz2
+
+@descomprimir
+tar xzvf /root/folder-etc.tar.gz
+tar zjvf /root/folder-etc.tar.bz2
+
+- nota -
+los archivos se pueden agregar solamente a los .tar
+
+@compresion star
+yum -y install star
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Crear y editar archivos de texto #
+
+nano o vim
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Crear, borrar, copiar y mover tanto archivos como directorios #
+
+cp, cp -R, mv, mkdir, touch {file1,file2,file3}
+cp -a
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Crear enlaces físicos y simbólicos #
+
+@enlace simbolico
+ln -s file enlace-simbolico, contienen el mismo inodo
+si elimino el archivo original, el enlace queda roto, se pierde toda la informacion
+
+@enlace fisico hardlink
+ln hardlink enlacefisico, comparten el mismo inodo
+si elimino uno de los archivos, se mantiene la informacion
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Enumerar, configurar y cambiar permisos ugo/rwx estándar #
+
+chmod ugo+rwx, ugo-rwx
+chmod 770
+chgrp, chown user:group directorio
+
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Localizar, leer y utilizar documentación de sistema, incluido man, info y archivos en /usr/share/doc #
+
+mandb; locatedb; updatedb 
