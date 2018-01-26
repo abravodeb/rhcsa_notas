@@ -1,0 +1,78 @@
+------------------------------------------------------------------------------------------------------------------------------|
+# Configurar las opciones de firewall mediante firewall-config, firewall-cmd o iptables #
+
+@verificar el servicio firewalld
+systemctl status firewalld
+
+@interfaz grafica, ejecutar como root
+firewall-config
+menu, aplicaciones, soundry, firewall
+
+- nota -
+a través de interfaz grafica los cambios se realizan en configuration: permanent
+
+@zona y servicios activos
+firewall-cmd --list-all
+firewall-cmd --get-default-zone
+firewall-cmd --get-active-zones
+fiwerall-cmd --get-zones
+firewall-cmd --get-services, listado de servicios
+
+@agregar un servicio/puerto
+firewall-cmd --permanent --add-service=httpd
+firewall-cmd --reload
+
+@remover un servicio
+firewall-cmd --permanent |--zone=public| --remove-service=ftp
+firewall-cmd --reaload
+
+- nota -
+el servicio puede estar activo, pero firewall puede bloquear
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Configurar la autenticación basada en claves para SSH #
+
+- nota -
+las claves son almacenadas en /home/user/.ssh
+
+@configurar claves
+ssh-keygen -t 'dsa, rsa, ecdsa, ed25519'
+
+@por defecto
+ssh-keygen, genera una clave rsa
+passpharase, enter
+
+@copiar clave a servidor
+ssh-copy-id root@servidor
+ssh root@servidor, sin password
+
+@copiar clave con ruta distinta
+ssh-copy-id -i /ruta/claves_ssh
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Establecer los modos de cumplimiento y permisivo para SELinux #
+
+@archivo de configuracion
+/etc/selinux/config
+
+@editar archivo
+SELINUX=enforcing, permissive, disabled
+
+- nota -
+al cambiar el estado de SELINUX es necesario reiniciar el servidor
+
+@obtener estado selinux
+setstatus
+getenforce
+
+@cambair estado selinux
+setenforce permissive
+@obtener estado selinux
+setenforce enforcing
+@obtener estado selinux
+
+setenforce 0, permissive 
+setenforce 1, enforcing
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Enumerar e identificar el contexto de archivos y procesos de SELinux #
