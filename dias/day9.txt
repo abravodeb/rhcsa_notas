@@ -5,5 +5,93 @@ de los procesos con renice y eliminar procesos #
 @comandos
 top, htop
 
-@parar un proceso
-kill -9 
+@parar un proceso por completo "forzado"
+kill -9 'nombre_proceso'
+
+@listado opciones kill
+kill -l "mas usados"
+15) SIGTERM, 18) SIGCONT,	19) SIGSTOP
+
+@ajustar prioridad en los proceso, defecto 0, rango de -19 - 20
+nice -n -20 httpd, inicia un proceso con mayor prioridad
+
+@cambiar prioridad de un proceso "httpd"
+ps axo pid,comm,nice |grep httpd, lista el proceso y nice
+renice -n -20 $(pgrep httpd), cambia el proceso a un nice con mayor prioridad
+
+@eliminar todos los procesos de un comando
+killall dd
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Ubicar e interpretar archivos de registro del sistema y diarios #
+
+@journal persistente
+mkdir /var/log/journal
+grep journal /etc/group
+chgrp systemd-journal /var/log/journal
+chmod 2755 /var/log/journal, permiso especial de grupo
+systemctl restart systemd-jorunald
+
+@limitar el tamaño de jorunal
+nano /etc/systemd/journal.conf
+edit, SystemtemMaxUse=, valor en MB
+
+ @leer logs
+ journalctl, journalctl -f
+ journalctl -u sshd -f
+ journalctl -u httpd
+
+ @listar todos los units
+ systemctl list-units |grep 'units'
+
+ @obtener reporte por fecha
+ journalctl -u sshd --since=yesterday --until=2018-25-01
+
+ ------------------------------------------------------------------------------------------------------------------------------|
+# Acceder a la consola de una máquina virtual #
+
+- nota -
+es necesario tener acceso root al servidor
+
+@acceder a la consola
+"rhgb quit" console=tty0
+grub2-mkconfig -o /boot/grub2/grub.cfg
+reboot
+virsh
+virsh list --all
+virsh console cliente1
+
+@otra forma de activar la consola en virsh
+grubby --update-kernel=ALL --arg="console=ttyS0"
+
+@agregar consola
+nano /etc/secure, tty0
+reboot
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Iniciar y detener maquinas virtuales # 
+
+@listar maquinas
+virsh list --all
+virsh list, maquinas corriendo
+virsh reboot cliente1, reinicia cliente1
+virsh start cliente1
+virsh destroy cliente1, fuerza el apagado
+
+@snap-shot
+virsh snapshot-list
+virsh snapshot-revert 'listado' cliente1
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Iniciar, detener y verificar el estado de los servicios de red #
+
+@verificar servicios
+systemctl is-active 'servicio'
+systemctl status httpd
+systemctl enable httpd
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Transferir archivos entre diferentes sistemas de forma segura #
+
+scp file.txt root@192.1.200.1:/home/files
+scp -r carpeta root@192.1.200.1:/home/directorio
