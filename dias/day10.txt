@@ -71,8 +71,127 @@ setenforce permissive
 setenforce enforcing
 @obtener estado selinux
 
-setenforce 0, permissive 
+setenforce 0, permissive
 setenforce 1, enforcing
 
 ------------------------------------------------------------------------------------------------------------------------------|
 # Enumerar e identificar el contexto de archivos y procesos de SELinux #
+
+@contexto de un archivo
+ls -lZ file
+
+- nota -
+el contexto de archivo es asignado de acuerdo a la locacion donde se encuentra
+
+@contexto de los procesos
+ps -eZ
+
+@ejemplo
+mkdir /var/ftp/pub/nuevo
+ls -lZd /var/ftp/pub/nuevo
+| drwxr-xr-x. root root 'unconfined_u:object_r:public_content_t':s0 nuevo/ |
+
+@listar contextos de archivos
+semanage fcontext -l |grep ftp, htpd
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Restaurar los contextos de archivo predeterminados #
+
+- nota -
+ejemplo realizado creando un archivo index en /var/www/html/index.html
+'hola mundo'
+
+@contexto de index.html
+ls -lZ /var/www/html/index.html
+-rw-r--r--. root root unconfined_u:object_r:httpd_sys_content_t:s0 index.html
+
+@cambiar contexto
+semanage fcontext -l |grep nfs
+chcon -t nfsd_exec_t index.html
+systemctl restart httpd
+ls -lZ index.html
+-rw-r--r--. root root unconfined_u:object_r:nfsd_exec_t:s0 index.html
+
+- nota -
+la pagina no carga y reenvia a welcome page! por defecto
+
+@restaurar contexto de archivo predeterminados
+restorecon -Rv html/
+systemctl restart httpd
+curl localhost
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Usar una configuración booleana para modificar las opciones de SELinux del sistema #
+
+- nota -
+habilitar semanage, yum install policycoreutils-python
+
+@mostrar boleanos
+getsebool -a |grep ftp
+
+@habialitar un especifico
+semanage boolean -l |grep parametro
+setsebool ssh_chroot_rw_homedirs on
+
+@habilitar al inicio
+setsebool -P ssh_chroot_rw_homedirs on
+
+@listar boolean ejecutados
+getsebool -l -C
+
+------------------------------------------------------------------------------------------------------------------------------|
+# Diagnosticar y solucionar infracciones rutinarias de la política de SELinux. #
+
+- nota -
+donde leer la informacion de selinux
+
+@cambiar contexto
+@obtener estado selinux
+setstatus
+getenforce
+
+- nota -
+para descartar problema en selinux, se cambia el modo
+
+setenforce 0
+si funciona por ejemplo la pagina web, se detecta problema, entonces se vuelve activar
+setenforce 1
+
+@instalar paquete si no esta instsalado
+yum install policycoreutils-devel
+
+@leer violaciones
+sealert -a /var/log/audit/audit.log
+journalctl -f
+
+- nota -
+muestra las posibles soluciones, tambien se puede visualizar a través de la herramienta
+grafica de redhat selinux.
+
+@otro ejemplo
+@revisar firewall
+firewall-cmd --list-all
+@revisar log por ejemplo de apache
+@bajar selinux
+getenforce
+setenforce 0
+@revisar log nuevamente
+@revisar file context
+@reparar contexto
+
+@ejemplo de pagina web, fuera de la carpeta /var/www/html, /home/web/
+es necesario crear una acl
+
+@ayuda
+man semanage-fcontext
+semanage fcontext -a -t httpd_sys_content_t "/home/web(/.*)?"
+
+@donde se almacena la acl
+cat /etc/selinux/targeted/contexts/files/file_contexts.local
+
+@comprobar
+ls -lZd /home/web
+restorecon -Rv /home/web
+ls -lZd /home/web
+
+fin!
