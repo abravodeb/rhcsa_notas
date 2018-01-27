@@ -1,0 +1,241 @@
+##### Examen del curso PDF  ##### 
+
+@ejecutar script en cliente1
+
+------------------------------------------------------------------------------------------------------------------------------|
+# configurar la maquina #
+
+@recuperar contraseña root
+
+@revisar journalctl -xb, "errores marcados en rojo"
+
+@cambiar hostname
+
+@configurar red 'nmcli'
+
+nmcli con show
+nmcli conn add type ethernet ifname eth0 con-name eth0 ipv4.address 192.168.4.50 ipv4.geteway 192.168.4.100 ipv4.dns 192.168.4.100
+ipv4.method manual connection.autoconnect yes
+
+@comprobar ip
+ip a
+
+@cambiar a graphical target
+systemctl set-default graphical.target
+
+------------------------------------------------------------------------------------------------------------------------------|
+# 1.Configurar Selinux # 
+
+@configurar selinux en enforcing mode
+nano /etc/selinux/config
+SELINUX=enforcing
+reboot
+
+------------------------------------------------------------------------------------------------------------------------------|
+# 2.Configurar repositorio #
+
+curl ftp://servidor.example.com/pub/repos/rhel7
+
+nano /etc/yum.repos.d/rhcsa.repo
+
+[rhcsa]
+name = Examen repo
+baseurl = ftp://servidor.example.com/pub/repos/rhel7
+enabled = 1
+gpgcheck = 0
+
+ctrl + o
+
+yum clean all
+yum repolist
+
+------------------------------------------------------------------------------------------------------------------------------|
+# 3.ajustar el tramaño de volumen logico #
+
+@comprobar discos
+fdisk -l
+@comprobar espacio
+parted /dev/sdX/ unit MB print free
+fdisk /dev/sdX
+500M type 8e, Linux LVM
+partprobe -s
+@extender volumen de grupo
+vgexted vg-group /dev/sdb1
+@extender volumen logico
+lvextend /dev/vg-group/root -L +500M -r -t
+@si la salida es correcta
+lvextend /dev/vg-group/root -L +500M -r
+
+# 4. Creacion de usuarios # 
+
+@grupos y usuarios
+groupadd adminuser
+useradd woody -G adminuser
+useradd buzz -G adminuser
+useradd sid -s /sbin/nologin
+passwd woody 'password321'
+passwd buzz 'password321'
+
+# 5.Configurar un archivo en /var/tmp/fstab permissions #
+
+@crear ACL
+cp /etc/fstab /var/tmp/fstab
+cd /var/tmp
+setfacl -m u:woody:rw /var/tmp/fstab
+setfacl -m u:buzz:--- /var/tmp/fstab
+
+# 6. Configurar tarea con cron #
+
+tarea programada 14:23 /bin/echo/ hiya
+@configurar cron
+crontab -e -u woody
+23 14 * * * /bin/echo HIYA
+crontab -l -u woody
+systemctl restart crond
+
+# 7. Crer directorio compartido #
+/home/admins
+
+chgrp adminuser /home/admins
+chmod 770 /home/admins
+chmod g+s /home/admins
+
+# 8.Actualizar el kernel #
+
+- configurar otro repositorio -
+repo: ftp://servidor.example.com/pub/repos/updates
+
+yum repolist
+
+yum list kernel
+yum install kernel
+reboot
+
+# configurar servicio LDAP
+- datos -
+dc=example, dc=com.
+ldap CA certificado: ftp://servidor.example.com/pub/ca.crt
+
+yum install authconfig-gtk sssd
+authconfig-gtk
+systemctl restart sssd
+getent passwd ldapuser5
+ssh ldapuser5@localhsot, yes - password
+
+# 10. configurar NTP
+
+urlserver = servidor.example.com
+rpm -qa |grep chrony
+nano /etc/chrony.conf
+server servidor.example.com iburst
+systemctl restart chronyd
+systemctl is-enable chronyd
+
+@verificar
+chonyc tracking || chronyc sources -v || timedatectl
+
+# 11.Crear un usuario con UID 2000 con nombre Alex
+adduser -u 2000 Alex
+
+# 12.Extender la particion swap 300MB y montarla automaticamente
+
+fdisk /dev/sdb
+n
++300M
+type 82 SWAP
+partprobe -s
+
+mkswap /dev/sdb2
+montar en uuid en "fstab"
+UUID="number-uuid" swap swap defaults 0 0
+swapon -s
+swapon -a
+
+# 13.Encontrar archivos
+de usuario woody y copiarlos en /user-files
+
+mkdir /user-files
+find / -type f -user woody
+find / -type f user woody -exec cp -a {} /user-files \;
+
+# 14. Encontrar todas las lineas que contengan seismic  en /usr/share/dic/words
+grep seismic /usr/share/dict/words >> /root/file-list
+
+# 15. Crear archivo comprimido
+comprimir /etc a /root/backup.tar.bz2
+
+tar cvfj /root/backup.tar.bz2 /etc/
+
+# 16.Crear un volumen logico
+- nota -
+nombre datastore
+tamaño 160M
+PE 16M
+montado en /mnt/database usando UUID
+sistema de archivo xfs
+
+fdisk /dev/sdb
+n
++176M
+type 8e Linux LVM
+w
+
+partprobe -s
+
+@crear vg
+vgcreate -s 16M datastore /dev/sdb3
+vgdisplay datastore
+
+@crear lv
+lvcreate -n database datastore -L 160M
+mkfs.xfs /dev/datastore/databse
+blkid
+@agregar en fstab
+mkdir /mnt/database
+UUID="uuid-number" /mnt/database xfs defaults 0 0
+df -h
+mount -a
+
+# 17.Crear nueva particion # 
+- nota si no hay espacio, crear una extendida -
+label = my-ext3
+size = 200MB
+montar = /data
+filesystem = ext3
+
+@crear particion
+@tipo linux
+@tamaño +200M
+w
+partprobe -s
+
+mkfs.ext -L my-ext3 /dev/sdb5
+
+@crear directorio montaje
+mkdir /data
+
+@editar fstab
+LABEL="my-ext3" /data ext3 defaults 0 0
+@comprobar
+df -hT
+
+@montar
+mount -a
+
+- nota -
+si no ocurre errores reiniciar, de lo contrario, revisar fstab, ya que el sistema no arrancara
+
+# 18.Montar directorio home de usuario ldap # 
+
+@paquetes
+yum install autofs -y
+systemctl enable autofs
+systemctl start autofs
+
+@crear archivo de configuracion
+nano /etc/auto.master.d/ldap-usuarios.autofs
+/home/ldap /etc/ldap-home
+
+- INCOMPLETO -
+
+# 19.Crear otro volumen logico # 
