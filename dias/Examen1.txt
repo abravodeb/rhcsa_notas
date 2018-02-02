@@ -236,6 +236,119 @@ systemctl start autofs
 nano /etc/auto.master.d/ldap-usuarios.autofs
 /home/ldap /etc/ldap-home
 
-- INCOMPLETO -
+nano /etc/ldap-home
+ldapuser5 -rw,rsync,nfsver=3 servidoripa2.example.com:/home/ldap/ldapuser5
+#all users
+* -rw,rsync,nfsver=3 servidoripa2.example.com:/home/ldap/&
+
+@probar conexion
+ssh ldapuser5@localhost
+pwd
+df -hT 
 
 # 19.Crear otro volumen logico # 
+
+@crear particion
+fdisk /dev/sdb
++336M
+vgcreate -s 16M services /dev/sdb6
+@comprobar tamaño disponible
+vgdisplay services
+lvcreate services -n lv_services -l 20
+@formatear como ext4
+mkfs.ext4 /dev/services/lv_services
+@crear punto de montaje
+mkdir /share
+@agregar en fstab
+blkid |grep -i services
+UUID="uuid_number" /share ext4 defaults 0 0
+
+# 20.Crear ACL
+
+- nota -
+se utilizan los grupos y usuarios creados anteriomente
+
+mkdir /restricted
+setfacl -m g:adminuser:rwX /restricted
+setfacl -m d:g:adminuser:rw /restricted
+setfacl -m u:woody:--- /restricted
+setfacl -m d:u:woddy:--- /restricted
+
+# 21.Montar un directorio samba # 
+
+- nota -
+montar en: /mnt/smb
+server: servidor.example.com
+credenciales: user=sambauser1,password=password
+montar automaticamente de manera persistente
+
+@punto de montaje
+mkdir /mnt/smb
+@crear credenciales
+nano /root/cred
+username=sambauser1
+password=password
+@cambiar permisos al archivo
+chmod 400 /root/cred
+@instalar paquetes
+yum install cifs-utils samba-client
+@ver recursos en servidor remoto
+smbclient -L //servidor.example.com
+smbclient -U sambauser1 //servidor.example.com/data
+@modificar fstab
+//servidor.example.com/data /mnt/smb cifs _netdev,credencials=/root/cred 0 0
+@comprobar
+mount -a
+df -hT
+
+# 22.Montar recursos nfs # 
+
+- nota -
+ruta: servidor.example.com/srv/nfs
+montar en: /mnt/public
+montar automaticamente de manera persistente
+
+@punto de montaje
+mkdir /mnt/public
+@paquetes
+rpm -qa |grep nfs-utils
+yum install nfs-utils
+@comprobar recursos
+showmount -e servidor.example.com
+@fstab
+servidor.example.com/srv/nfs  /mnt/public nfs _netdev 0 0
+@comprobar
+mount -a
+df -hT
+
+# 23.Comprobar funcionamiento de Apache #
+
+- nota -
+servidor apache corriendo en localhost
+
+@comprobar
+curl localhsot
+@verificar selinux
+getenforce
+setenforce 0, pasar a permisivo
+si funciona el servicio, selinux necesita comprobarse
+@verificar logs
+journalctl -n 100 -f
+sealert -a /var/log/audit/audit.log
+cargará las posibles soluciones
+@ver contexto del directorio
+ls -ldZ /ruta/sitioweb
+@ver contexto correcto en /var/www/html
+ls -ldZ /var/www/html
+man semanage-fcontext
+restaurar los contextos
+restorecon -R /ruta/sitioweb
+
+
+### camnbiar el target por defecto ### 
+
+systemctl default-target multi-user.target
+
+
+@comprobaciones finales
+target, servicios, permisos, kernel, fstab.
