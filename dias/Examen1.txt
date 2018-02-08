@@ -21,7 +21,7 @@ ipv4.method manual connection.autoconnect yes
 ip a
 
 @cambiar a graphical target
-systemctl set-default graphical.target
+systemctl set-default graphical.target o systemctl isolate graphical.target 
 
 ------------------------------------------------------------------------------------------------------------------------------|
 # 1.Configurar Selinux # 
